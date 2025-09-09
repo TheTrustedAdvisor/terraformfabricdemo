@@ -58,6 +58,12 @@ data "fabric_capacity" "main" {
   display_name = var.capacity_name
 }
 
+# Data source to lookup user IDs from email addresses
+data "fabric_user" "admin_users" {
+  count = length(var.additional_workspace_admins)
+  email = var.additional_workspace_admins[count.index]
+}
+
 # Create Fabric Workspace
 resource "fabric_workspace" "main" {
   display_name = var.workspace_name
@@ -78,7 +84,7 @@ resource "fabric_workspace_role_assignment" "admin_assignments" {
   
   workspace_id = fabric_workspace.main.id
   principal = {
-    id   = var.additional_workspace_admins[count.index]
+    id   = data.fabric_user.admin_users[count.index].id
     type = "User"
   }
   role = "Admin"
