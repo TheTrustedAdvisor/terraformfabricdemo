@@ -31,13 +31,13 @@ provider "azurerm" {
 variable "workspace_name" {
   description = "Name of the Fabric workspace"
   type        = string
-  default     = "terraform-fabric-demo"
+  default     = "mf-terraform-fabric-demo"
 }
 
 variable "capacity_name" {
   description = "Name of the Fabric capacity to use (optional)"
   type        = string
-  default     = null
+  default     = mffabricdemo
 }
 
 variable "location" {
