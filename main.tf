@@ -130,20 +130,6 @@ resource "fabric_data_pipeline" "transfer_pipeline" {
   display_name = "LakehouseTransferPipeline"
   description  = "Pipeline to transfer data from source to target lakehouse"
   workspace_id = fabric_workspace.main.id
-  format       = "Default"
-  
-  definition = {
-    "pipeline-content.json" = {
-      source = "pipeline-content.json"
-      tokens = {
-        "SourceLakehouseId"   = fabric_lakehouse.source.id
-        "TargetLakehouseId"   = fabric_lakehouse.target.id
-        "SourceLakehouseName" = fabric_lakehouse.source.display_name
-        "TargetLakehouseName" = fabric_lakehouse.target.display_name
-        "WorkspaceId"         = fabric_workspace.main.id
-      }
-    }
-  }
   
   depends_on = [
     fabric_lakehouse.source,
