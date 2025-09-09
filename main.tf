@@ -37,7 +37,7 @@ variable "workspace_name" {
 variable "capacity_name" {
   description = "Name of the Fabric capacity to use (optional)"
   type        = string
-  default     = mffabricdemo
+  default     = "mffabricdemo"
 }
 
 variable "location" {
