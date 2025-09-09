@@ -46,6 +46,12 @@ variable "location" {
   default     = "West Europe"
 }
 
+variable "additional_workspace_admins" {
+  description = "List of additional users to grant workspace admin access"
+  type        = list(string)
+  default     = ["matthias.gessenay@corporatesoftware.ch"]
+}
+
 # Data source to find existing Fabric capacity (optional)
 data "fabric_capacity" "main" {
   count        = var.capacity_name != null ? 1 : 0
@@ -64,6 +70,18 @@ resource "fabric_workspace" "main" {
   identity = {
     type = "SystemAssigned"
   }
+}
+
+# Add workspace role assignments for additional admins
+resource "fabric_workspace_role_assignment" "admin_assignments" {
+  count = length(var.additional_workspace_admins)
+  
+  workspace_id = fabric_workspace.main.id
+  principal = {
+    id   = var.additional_workspace_admins[count.index]
+    type = "User"
+  }
+  role = "Admin"
 }
 
 # Create Source Lakehouse
