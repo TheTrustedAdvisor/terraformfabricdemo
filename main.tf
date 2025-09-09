@@ -30,7 +30,7 @@ provider "fabric" {
 provider "azurerm" {
   features {}
   # Disable automatic resource provider registration to avoid permission issues
-  resource_provider_registrations = "none"
+  skip_provider_registration = true
 }
 
 # Configure the Azure AD Provider for user lookup
