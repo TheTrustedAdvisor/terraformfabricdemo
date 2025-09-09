@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -25,6 +29,11 @@ provider "fabric" {
 # Configure the Azure Provider for capacity lookup
 provider "azurerm" {
   features {}
+}
+
+# Configure the Azure AD Provider for user lookup
+provider "azuread" {
+  # Uses Azure CLI authentication by default
 }
 
 # Variables
@@ -58,10 +67,12 @@ data "fabric_capacity" "main" {
   display_name = var.capacity_name
 }
 
-# Data source to lookup user IDs from email addresses
-data "fabric_user" "admin_users" {
-  count = length(var.additional_workspace_admins)
-  email = var.additional_workspace_admins[count.index]
+# Data source to lookup user IDs from Azure AD using email addresses
+data "azurerm_client_config" "current" {}
+
+data "azuread_user" "admin_users" {
+  count               = length(var.additional_workspace_admins)
+  user_principal_name = var.additional_workspace_admins[count.index]
 }
 
 # Create Fabric Workspace
@@ -84,7 +95,7 @@ resource "fabric_workspace_role_assignment" "admin_assignments" {
   
   workspace_id = fabric_workspace.main.id
   principal = {
-    id   = data.fabric_user.admin_users[count.index].id
+    id   = data.azuread_user.admin_users[count.index].object_id
     type = "User"
   }
   role = "Admin"
