@@ -1,0 +1,167 @@
+{
+  "name": "lakehouse-transfer-pipeline",
+  "properties": {
+    "description": "Pipeline to transfer data from source to target lakehouse",
+    "activities": [
+      {
+        "name": "CreateSampleData",
+        "type": "Script",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "scriptBlockExecutionTimeout": "02:00:00",
+          "scripts": [
+            {
+              "type": "NonQuery",
+              "text": "-- Create sample data in source lakehouse\nCREATE OR REPLACE TABLE {{ .SourceLakehouseName }}.dbo.sample_customers (\n    customer_id INT,\n    customer_name STRING,\n    email STRING,\n    registration_date DATE,\n    country STRING,\n    total_orders INT,\n    total_spent DECIMAL(10,2)\n) USING DELTA;\n\nINSERT INTO {{ .SourceLakehouseName }}.dbo.sample_customers VALUES\n(1, 'Max Mustermann', 'max@example.com', '2023-01-15', 'Germany', 12, 1250.50),\n(2, 'Anna Schmidt', 'anna@example.com', '2023-02-20', 'Germany', 8, 890.75),\n(3, 'John Smith', 'john@example.com', '2023-03-10', 'USA', 15, 2100.00),\n(4, 'Marie Dubois', 'marie@example.com', '2023-04-05', 'France', 6, 450.25),\n(5, 'Carlos Rodriguez', 'carlos@example.com', '2023-05-12', 'Spain', 10, 1580.90),\n(6, 'Lisa Johnson', 'lisa@example.com', '2023-06-18', 'USA', 22, 3200.45),\n(7, 'Andreas Müller', 'andreas@example.com', '2023-07-22', 'Germany', 4, 320.80),\n(8, 'Sophie Martin', 'sophie@example.com', '2023-08-30', 'France', 18, 2450.60),\n(9, 'David Wilson', 'david@example.com', '2023-09-14', 'UK', 7, 675.30),\n(10, 'Elena Rossi', 'elena@example.com', '2023-10-08', 'Italy', 13, 1890.75);\n\n-- Create sample orders table\nCREATE OR REPLACE TABLE {{ .SourceLakehouseName }}.dbo.sample_orders (\n    order_id INT,\n    customer_id INT,\n    order_date DATE,\n    product_name STRING,\n    quantity INT,\n    unit_price DECIMAL(10,2),\n    total_amount DECIMAL(10,2)\n) USING DELTA;\n\nINSERT INTO {{ .SourceLakehouseName }}.dbo.sample_orders VALUES\n(101, 1, '2024-01-15', 'Laptop', 1, 999.99, 999.99),\n(102, 1, '2024-01-20', 'Mouse', 2, 25.50, 51.00),\n(103, 2, '2024-01-22', 'Monitor', 1, 299.99, 299.99),\n(104, 3, '2024-02-01', 'Keyboard', 1, 79.99, 79.99),\n(105, 3, '2024-02-05', 'Webcam', 1, 89.99, 89.99),\n(106, 4, '2024-02-10', 'Headphones', 1, 199.99, 199.99),\n(107, 5, '2024-02-15', 'Tablet', 1, 399.99, 399.99),\n(108, 6, '2024-02-20', 'Smartphone', 1, 699.99, 699.99),\n(109, 7, '2024-02-25', 'Charger', 3, 19.99, 59.97),\n(110, 8, '2024-03-01', 'Laptop Stand', 1, 49.99, 49.99);"
+            }
+          ],
+          "logSettings": {
+            "enableCopyActivityLog": false
+          }
+        }
+      },
+      {
+        "name": "CopyCustomerData",
+        "type": "Copy",
+        "dependsOn": [
+          {
+            "activity": "CreateSampleData",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "LakehouseTableSource",
+            "lakehouseLocation": {
+              "lakehouseArtifactId": "{{ .SourceLakehouseId }}",
+              "workspaceId": "{{ .WorkspaceId }}"
+            },
+            "tableName": "sample_customers"
+          },
+          "sink": {
+            "type": "LakehouseTableSink",
+            "lakehouseLocation": {
+              "lakehouseArtifactId": "{{ .TargetLakehouseId }}",
+              "workspaceId": "{{ .WorkspaceId }}"
+            },
+            "tableName": "customers",
+            "tableActionOption": "OverwriteSchema"
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          }
+        }
+      },
+      {
+        "name": "CopyOrdersData",
+        "type": "Copy",
+        "dependsOn": [
+          {
+            "activity": "CopyCustomerData",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "LakehouseTableSource",
+            "lakehouseLocation": {
+              "lakehouseArtifactId": "{{ .SourceLakehouseId }}",
+              "workspaceId": "{{ .WorkspaceId }}"
+            },
+            "tableName": "sample_orders"
+          },
+          "sink": {
+            "type": "LakehouseTableSink",
+            "lakehouseLocation": {
+              "lakehouseArtifactId": "{{ .TargetLakehouseId }}",
+              "workspaceId": "{{ .WorkspaceId }}"
+            },
+            "tableName": "orders",
+            "tableActionOption": "OverwriteSchema"
+          },
+          "enableStaging": false,
+          "translator": {
+            "type": "TabularTranslator",
+            "typeConversion": true,
+            "typeConversionSettings": {
+              "allowDataTruncation": true,
+              "treatBooleanAsNumber": false
+            }
+          }
+        }
+      },
+      {
+        "name": "CreateAggregatedView",
+        "type": "Script",
+        "dependsOn": [
+          {
+            "activity": "CopyOrdersData",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "scriptBlockExecutionTimeout": "02:00:00",
+          "scripts": [
+            {
+              "type": "NonQuery",
+              "text": "-- Create aggregated customer summary in target lakehouse\nCREATE OR REPLACE TABLE {{ .TargetLakehouseName }}.dbo.customer_summary AS\nSELECT \n    c.customer_id,\n    c.customer_name,\n    c.email,\n    c.country,\n    c.registration_date,\n    COUNT(o.order_id) as actual_orders,\n    COALESCE(SUM(o.total_amount), 0) as actual_total_spent,\n    c.total_orders as reported_orders,\n    c.total_spent as reported_total_spent,\n    CASE \n        WHEN COUNT(o.order_id) = c.total_orders THEN 'Consistent'\n        ELSE 'Inconsistent'\n    END as data_consistency_check\nFROM {{ .TargetLakehouseName }}.dbo.customers c\nLEFT JOIN {{ .TargetLakehouseName }}.dbo.orders o ON c.customer_id = o.customer_id\nGROUP BY \n    c.customer_id, c.customer_name, c.email, c.country, \n    c.registration_date, c.total_orders, c.total_spent\nORDER BY c.customer_id;\n\n-- Create monthly sales summary\nCREATE OR REPLACE TABLE {{ .TargetLakehouseName }}.dbo.monthly_sales_summary AS\nSELECT \n    YEAR(order_date) as sales_year,\n    MONTH(order_date) as sales_month,\n    COUNT(DISTINCT customer_id) as unique_customers,\n    COUNT(order_id) as total_orders,\n    SUM(total_amount) as total_revenue,\n    AVG(total_amount) as avg_order_value,\n    MIN(total_amount) as min_order_value,\n    MAX(total_amount) as max_order_value\nFROM {{ .TargetLakehouseName }}.dbo.orders\nGROUP BY YEAR(order_date), MONTH(order_date)\nORDER BY sales_year, sales_month;"
+            }
+          ],
+          "logSettings": {
+            "enableCopyActivityLog": false
+          }
+        }
+      }
+    ],
+    "parameters": {},
+    "variables": {},
+    "folder": {
+      "name": "Data Transfer Pipelines"
+    },
+    "annotations": [
+      "sample-data",
+      "lakehouse-transfer",
+      "terraform-managed"
+    ]
+  }
+}
