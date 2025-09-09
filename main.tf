@@ -29,6 +29,8 @@ provider "fabric" {
 # Configure the Azure Provider for capacity lookup
 provider "azurerm" {
   features {}
+  # Disable automatic resource provider registration to avoid permission issues
+  resource_provider_registrations = "none"
 }
 
 # Configure the Azure AD Provider for user lookup
