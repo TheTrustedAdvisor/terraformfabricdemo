@@ -68,7 +68,7 @@ resource "fabric_workspace" "main" {
 
 # Create Source Lakehouse
 resource "fabric_lakehouse" "source" {
-  display_name = "source-lakehouse"
+  display_name = "SourceLakehouse"
   description  = "Source lakehouse containing sample data"
   workspace_id = fabric_workspace.main.id
   
@@ -79,7 +79,7 @@ resource "fabric_lakehouse" "source" {
 
 # Create Target Lakehouse
 resource "fabric_lakehouse" "target" {
-  display_name = "target-lakehouse"
+  display_name = "TargetLakehouse"
   description  = "Target lakehouse for data pipeline transfers"
   workspace_id = fabric_workspace.main.id
   
@@ -90,7 +90,7 @@ resource "fabric_lakehouse" "target" {
 
 # Create Data Pipeline to transfer data between lakehouses
 resource "fabric_data_pipeline" "transfer_pipeline" {
-  display_name = "lakehouse-transfer-pipeline"
+  display_name = "LakehouseTransferPipeline"
   description  = "Pipeline to transfer data from source to target lakehouse"
   workspace_id = fabric_workspace.main.id
   format       = "Default"
